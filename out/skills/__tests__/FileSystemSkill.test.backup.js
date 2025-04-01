@@ -45,17 +45,23 @@ describe('FileSystemSkill', () => {
     beforeEach(() => {
         jest.clearAllMocks();
     });
-    describe('validation', () => {
-        it('should have validate method', () => {
-            expect(FileSystemSkill_1.FileSystemSkill.validate).toBeDefined();
-        });
-        it('should require path parameter', () => {
+    describe('file operations', () => {
+        it('should read file successfully', () => __awaiter(void 0, void 0, void 0, function* () {
+            mockedFs.readFile.mockResolvedValue('file content');
+            const result = yield FileSystemSkill_1.FileSystemSkill.execute({
+                operation: 'read',
+                path: 'test.txt'
+            }, mockContext);
+            expect(result.success).toBe(true);
+            expect(result.output).toBe('file content');
+        }));
+        it('should write file successfully', () => __awaiter(void 0, void 0, void 0, function* () {
             if (!FileSystemSkill_1.FileSystemSkill.validate)
                 return;
             const validation = FileSystemSkill_1.FileSystemSkill.validate({ operation: 'read' });
             expect(validation.valid).toBe(false);
             expect(validation.errors).toContain('Path parameter is required');
-        });
+        }));
         it('should require content for write operations', () => {
             if (!FileSystemSkill_1.FileSystemSkill.validate)
                 return;
@@ -79,7 +85,7 @@ describe('FileSystemSkill', () => {
     });
     describe('file operations', () => {
         it('should read file successfully', () => __awaiter(void 0, void 0, void 0, function* () {
-            mockedFsPromises.readFile.mockResolvedValue('file content');
+            mockedFs.readFile.mockResolvedValue('file content');
             const result = yield FileSystemSkill_1.FileSystemSkill.execute({
                 operation: 'read',
                 path: 'test.txt'
@@ -89,7 +95,6 @@ describe('FileSystemSkill', () => {
             expect(mockedFsPromises.readFile).toHaveBeenCalledWith(path_1.default.resolve('test.txt'), 'utf-8');
         }));
         it('should write file successfully', () => __awaiter(void 0, void 0, void 0, function* () {
-            mockedFsPromises.writeFile.mockResolvedValue(undefined);
             const result = yield FileSystemSkill_1.FileSystemSkill.execute({
                 operation: 'write',
                 path: 'test.txt',
@@ -99,7 +104,6 @@ describe('FileSystemSkill', () => {
             expect(mockedFsPromises.writeFile).toHaveBeenCalledWith(path_1.default.resolve('test.txt'), 'new content', 'utf-8');
         }));
         it('should delete file successfully', () => __awaiter(void 0, void 0, void 0, function* () {
-            mockedFsPromises.unlink.mockResolvedValue(undefined);
             const result = yield FileSystemSkill_1.FileSystemSkill.execute({
                 operation: 'delete',
                 path: 'test.txt'
@@ -108,6 +112,7 @@ describe('FileSystemSkill', () => {
             expect(mockedFsPromises.unlink).toHaveBeenCalledWith(path_1.default.resolve('test.txt'));
         }));
         it('should list directory contents', () => __awaiter(void 0, void 0, void 0, function* () {
+            // Create proper Dirent mock objects
             const mockDirent1 = {
                 name: 'file1.txt',
                 isFile: () => true,
@@ -137,4 +142,4 @@ describe('FileSystemSkill', () => {
         }));
     });
 });
-//# sourceMappingURL=FileSystemSkill.test.js.map
+//# sourceMappingURL=FileSystemSkill.test.backup.js.map

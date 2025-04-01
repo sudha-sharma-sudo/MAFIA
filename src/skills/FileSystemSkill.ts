@@ -37,16 +37,24 @@ export const FileSystemSkill: EnhancedSkillDefinition = {
   },
 
   validate(params: any) {
+    const errors: string[] = [];
+    const validOperations = ['read', 'write', 'delete', 'list', 'stat'];
+    
     if (!params.operation) {
-      return { valid: false, errors: ['Operation parameter is required'] };
+      errors.push('Operation parameter is required');
+    } else if (!validOperations.includes(params.operation)) {
+      errors.push('Invalid operation type');
     }
+    
     if (!params.path) {
-      return { valid: false, errors: ['Path parameter is required'] };
+      errors.push('Path parameter is required');
     }
+    
     if (params.operation === 'write' && !params.content) {
-      return { valid: false, errors: ['Content is required for write operations'] };
+      errors.push('Content is required for write operations');
     }
-    return { valid: true };
+    
+    return { valid: errors.length === 0, errors };
   },
 
   async execute(params: any, context?: SkillContext): Promise<SkillExecutionResult> {

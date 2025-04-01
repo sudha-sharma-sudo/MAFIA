@@ -1,82 +1,26 @@
-# FileSystem UI Architecture
+# System Architecture v2.0
 
-## Component Diagram
-```
-┌─────────────────────────────────────────────────┐
-│               VSCode Extension                  │
-│                                                 │
-│  ┌─────────────┐    ┌───────────────────────┐  │
-│  │ Command     │    │ WebviewPanel          │  │
-│  │ Registration│    │                       │  │
-│  └──────┬──────┘    └───────────┬───────────┘  │
-│         │                       │              │
-│         ▼                       ▼              │
-│  ┌─────────────┐    ┌───────────────────────┐  │
-│  │ FileSystem  │    │ FileSystemUI          │  │
-│  │ Skill       │    │ (Webview)             │  │
-│  └──────┬──────┘    └───────────┬───────────┘  │
-│         │                       │              │
-│         ▼                       ▼              │
-│  ┌─────────────┐    ┌───────────────────────┐  │
-│  │ Node.js     │    │ HTML/CSS/JS           │  │
-│  │ File System │    │ (Tailwind, FontAwesome)│  │
-│  │ API         │    │                       │  │
-│  └─────────────┘    └───────────────────────┘  │
-└─────────────────────────────────────────────────┘
+## File Management UI Layer
+### Components
+- `FileManagerUI` (React/Typescript)
+- `FileList` (Responsive grid)
+- `FileUpload` (Drag-and-drop)
+
+### Key Features
+- Tailwind CSS styling
+- Mobile-first responsive design
+- Real-time error handling
+
+## Backend Integration
+```typescript
+// Example integration
+interface FileAPI {
+  listFiles(path: string): Promise<File[]>;
+  uploadFile(file: File, path: string): Promise<void>;
+}
 ```
 
-## Data Flow
-```
-┌───────────┐    ┌───────────┐    ┌───────────┐
-│   User    │───▶│ Webview   │───▶│ Extension │
-│ Interface │    │   UI      │    │  Backend  │
-└───────────┘    └───────────┘    └─────┬─────┘
-                                         ▼
-                                 ┌───────────────┐
-                                 │ File System   │
-                                 │ Operations    │
-                                 └───────────────┘
-```
-
-## FileSystem Skill Class Diagram
-``` 
-┌───────────────────────────────┐
-│       FileSystemSkill         │
-├───────────────────────────────┤
-│ - metadata: SkillMetadata     │
-│ - validate(params): Validation│
-│ - execute(params): Promise    │
-└───────────────┬───────────────┘
-                │
-                ▼
-┌───────────────────────────────┐
-│       FileSystemUI            │
-├───────────────────────────────┤
-│ - currentPanel: WebviewPanel  │
-│ - show(context): void         │
-│ - getWebviewContent(): string │
-└───────────────────────────────┘
-```
-
-## Sequence Diagram
-```
-User            Webview        Extension       FileSystem
- │                │               │               │
- │  Open UI       │               │               │
- │───────────────▶│               │               │
- │                │  Create Panel │               │
- │                │──────────────▶│               │
- │                │               │  Init Skill   │
- │                │               │──────────────▶│
- │                │◀──────────────│               │
- │◀───────────────│               │               │
- │                │               │               │
- │  File Op       │               │               │
- │───────────────▶│               │               │
- │                │  Forward Op   │               │
- │                │──────────────▶│               │
- │                │               │ Execute Op    │
- │                │               │──────────────▶│
- │                │               │◀──────────────│
- │                │◀──────────────│               │
- │◀───────────────│               │               │
+## Tech Stack
+- React 18
+- TypeScript 4.9+
+- Tailwind CSS 3

@@ -84,8 +84,8 @@ Implement [FEATURE] with:
 
 [PARAMETERS]
 - Safety: 90%
-- Innovation: 60%
-- Speed: 70%
+- Innovation: 80%
+- Speed: 170%
 ```
 
 ### Verification Process

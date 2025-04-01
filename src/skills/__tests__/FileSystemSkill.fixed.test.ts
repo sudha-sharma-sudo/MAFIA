@@ -37,19 +37,12 @@ describe('FileSystemSkill', () => {
     jest.clearAllMocks();
   });
 
-  describe('file operations', () => {
-    it('should read file successfully', async () => {
-      mockedFs.readFile.mockResolvedValue('file content');
-      const result = await FileSystemSkill.execute({
-        operation: 'read',
-        path: 'test.txt'
-      }, mockContext);
-      
-      expect(result.success).toBe(true);
-      expect(result.output).toBe('file content');
+  describe('validation', () => {
+    it('should have validate method', () => {
+      expect(FileSystemSkill.validate).toBeDefined();
     });
 
-    it('should write file successfully', async () => {
+    it('should require path parameter', () => {
       if (!FileSystemSkill.validate) return;
       const validation = FileSystemSkill.validate({ operation: 'read' });
       expect(validation.valid).toBe(false);
@@ -79,7 +72,7 @@ describe('FileSystemSkill', () => {
 
   describe('file operations', () => {
     it('should read file successfully', async () => {
-      mockedFs.readFile.mockResolvedValue('file content');
+      mockedFsPromises.readFile.mockResolvedValue('file content');
       const result = await FileSystemSkill.execute({
         operation: 'read',
         path: 'test.txt'
@@ -94,6 +87,7 @@ describe('FileSystemSkill', () => {
     });
 
     it('should write file successfully', async () => {
+      mockedFsPromises.writeFile.mockResolvedValue(undefined);
       const result = await FileSystemSkill.execute({
         operation: 'write',
         path: 'test.txt',
@@ -109,6 +103,7 @@ describe('FileSystemSkill', () => {
     });
 
     it('should delete file successfully', async () => {
+      mockedFsPromises.unlink.mockResolvedValue(undefined);
       const result = await FileSystemSkill.execute({
         operation: 'delete',
         path: 'test.txt'
@@ -121,7 +116,6 @@ describe('FileSystemSkill', () => {
     });
 
     it('should list directory contents', async () => {
-      // Create proper Dirent mock objects
       const mockDirent1 = {
         name: 'file1.txt',
         isFile: () => true,

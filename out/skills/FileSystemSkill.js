@@ -48,16 +48,21 @@ exports.FileSystemSkill = {
         parameters: FileSystemParameters
     },
     validate(params) {
+        const errors = [];
+        const validOperations = ['read', 'write', 'delete', 'list', 'stat'];
         if (!params.operation) {
-            return { valid: false, errors: ['Operation parameter is required'] };
+            errors.push('Operation parameter is required');
+        }
+        else if (!validOperations.includes(params.operation)) {
+            errors.push('Invalid operation type');
         }
         if (!params.path) {
-            return { valid: false, errors: ['Path parameter is required'] };
+            errors.push('Path parameter is required');
         }
         if (params.operation === 'write' && !params.content) {
-            return { valid: false, errors: ['Content is required for write operations'] };
+            errors.push('Content is required for write operations');
         }
-        return { valid: true };
+        return { valid: errors.length === 0, errors };
     },
     execute(params, context) {
         return __awaiter(this, void 0, void 0, function* () {
