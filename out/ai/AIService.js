@@ -8,56 +8,85 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.AIService = void 0;
-const axios_1 = __importDefault(require("axios"));
+const vscode = process.env.NODE_ENV === 'test'
+    ? global.vscode
+    : require('vscode');
+const uuid_1 = require("uuid");
+const AgentSystem_1 = require("../core/AgentSystem");
 class AIService {
-    constructor(config) {
-        this.baseUrl = 'https://api.blackbox.ai/v1';
+    constructor(config = {}) {
         this.cache = new Map();
-        this.apiKey = config.apiKey;
-    }
-    callAI(endpoint, payload, retries = 3) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const cacheKey = `${endpoint}:${JSON.stringify(payload)}`;
-            if (this.cache.has(cacheKey)) {
-                return this.cache.get(cacheKey);
-            }
-            try {
-                const response = yield axios_1.default.post(`${this.baseUrl}/${endpoint}`, payload, {
-                    headers: { Authorization: `Bearer ${this.apiKey}` },
-                    timeout: 10000
-                });
-                const result = response.data.result;
-                this.cache.set(cacheKey, result);
-                return result;
-            }
-            catch (error) {
-                if (retries > 0) {
-                    return this.callAI(endpoint, payload, retries - 1);
-                }
-                throw new Error(`API request failed: ${error instanceof Error ? error.message : String(error)}`);
-            }
+        this.apiKey = config.apiKey || '';
+        this.agent = new AgentSystem_1.MAFIAAgent({
+            knowledgeGraph: Object.assign({ persistToDisk: true, maxHistoryItems: 1000 }, config.knowledgeGraph)
         });
     }
-    processQuery(query) {
+    executeSkill(skillName, params) {
         return __awaiter(this, void 0, void 0, function* () {
-            return this.callAI('query', { text: query });
+            const cacheKey = `${skillName}:${JSON.stringify(params)}`;
+            const task = {
+                id: (0, uuid_1.v4)(),
+                type: skillName,
+                parameters: params,
+                priority: 1
+            };
+            try {
+                if (this.cache.has(cacheKey)) {
+                    return {
+                        output: this.cache.get(cacheKey),
+                        success: true,
+                        metrics: {
+                            duration: 0,
+                            cacheHit: true
+                        }
+                    };
+                }
+                const startTime = Date.now();
+                const result = yield this.agent.executeTask(task);
+                const duration = Date.now() - startTime;
+                if (result.success && result.output) {
+                    this.cache.set(cacheKey, result.output);
+                }
+                return Object.assign(Object.assign({}, result), { metrics: Object.assign(Object.assign({}, result.metrics), { duration }) });
+            }
+            catch (error) {
+                vscode.window.showErrorMessage(`Skill execution failed: ${error instanceof Error ? error.message : String(error)}`);
+                throw error;
+            }
         });
     }
     analyzeCode(code) {
         return __awaiter(this, void 0, void 0, function* () {
-            return this.callAI('analyze', { code });
+            const result = yield this.executeSkill('code-analysis', { code });
+            return result.output;
+        });
+    }
+    refactorCode(code, refactorType) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const result = yield this.executeSkill('code-refactor', {
+                code,
+                refactorType: refactorType || 'optimize'
+            });
+            return result.output;
+        });
+    }
+    processQuery(query) {
+        return __awaiter(this, void 0, void 0, function* () {
+            return this.analyzeCode(query);
         });
     }
     generateDocumentation(code) {
         return __awaiter(this, void 0, void 0, function* () {
-            const docs = yield this.callAI('docs', { code });
-            return `# Documentation\n\n${docs}\n\n## Parameters\n\n## Examples\n`;
+            return this.analyzeCode(code);
         });
+    }
+    clearCache() {
+        this.cache.clear();
+        if ('clearCache' in this.agent.skillSet) {
+            this.agent.skillSet.clearCache();
+        }
     }
 }
 exports.AIService = AIService;

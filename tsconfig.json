@@ -3,13 +3,16 @@
     "module": "commonjs",
     "target": "es6",
     "outDir": "out",
-    "lib": ["es6"],
+    "lib": ["es6", "dom"],
     "sourceMap": true,
-    "rootDir": "src",
     "strict": true,
-    "esModuleInterop": true,
-    "skipLibCheck": true
+    "baseUrl": ".",
+    "paths": {
+      "@core/*": ["src/core/*"],
+      "@skills/*": ["src/skills/*"]
+    },
+    "esModuleInterop": true
   },
-  "include": ["src/**/*"],
-  "exclude": ["node_modules"]
+  "include": ["src/**/*", "demo.ts"],
+  "exclude": ["node_modules", ".vscode-test"]
 }

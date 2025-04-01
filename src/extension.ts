@@ -1,5 +1,7 @@
 import * as vscode from 'vscode';
+import { v4 as uuidv4 } from 'uuid';
 import { AIService } from './ai/AIService';
+import { MAFIAAgent } from './core/AgentSystem';
 
 export function activate(context: vscode.ExtensionContext) {
     const config = vscode.workspace.getConfiguration('blackboxai');
@@ -9,7 +11,45 @@ export function activate(context: vscode.ExtensionContext) {
         vscode.window.showErrorMessage('BLACKBOX AI: API key not configured');
     }
 
-    const aiService = new AIService({ apiKey });
+    const aiService = new AIService();
+    const agent = new MAFIAAgent();
+    
+    // Import and register skills
+    const CodeAnalysisSkill = require('./skills/CodeAnalysisSkill').default;
+    const CodeRefactorSkill = require('./skills/CodeRefactorSkill').default;
+    
+    agent.skillSet.registerSkill(CodeAnalysisSkill);
+    agent.skillSet.registerSkill(CodeRefactorSkill);
+
+    // Initialize agent with AI service
+    agent.skillSet.getSkill('code-analysis')!.execute = 
+        async (params: any) => {
+            const startTime = Date.now();
+            const output = await aiService.analyzeCode(params.code);
+            return {
+                output,
+                success: true,
+                metrics: {
+                    duration: Date.now() - startTime,
+                    memoryUsage: 0,
+                    cpuUsage: 0
+                }
+            };
+        };
+    agent.skillSet.getSkill('code-refactor')!.execute = 
+        async (params: any) => {
+            const startTime = Date.now();
+            const output = await aiService.refactorCode(params.code, params.refactorType);
+            return {
+                output,
+                success: true,
+                metrics: {
+                    duration: Date.now() - startTime,
+                    memoryUsage: 0,
+                    cpuUsage: 0
+                }
+            };
+        };
 
     // Register commands
     context.subscriptions.push(
@@ -26,7 +66,7 @@ export function activate(context: vscode.ExtensionContext) {
             panel.webview.onDidReceiveMessage(
                 async message => {
                     try {
-                        const response = await aiService.processQuery(message.text);
+                    const response = await aiService.analyzeCode(message.text);
                         panel.webview.postMessage({ 
                             command: 'response', 
                             data: response 
@@ -59,7 +99,7 @@ export function activate(context: vscode.ExtensionContext) {
             const editor = vscode.window.activeTextEditor;
             if (editor) {
                 try {
-                    const docs = await aiService.generateDocumentation(editor.document.getText());
+                    const docs = await aiService.analyzeCode(editor.document.getText());
                     const docPath = editor.document.fileName + '.md';
                     await vscode.workspace.fs.writeFile(
                         vscode.Uri.file(docPath),
@@ -69,6 +109,40 @@ export function activate(context: vscode.ExtensionContext) {
                 } catch (error) {
                     vscode.window.showErrorMessage(`Documentation generation failed: ${error instanceof Error ? error.message : String(error)}`);
                 }
+            }
+        }),
+
+        vscode.commands.registerCommand('blackboxai.refactorCode', async () => {
+            const editor = vscode.window.activeTextEditor;
+            if (!editor) {
+                vscode.window.showErrorMessage('No active editor found');
+                return;
+            }
+
+            try {
+    const result = await agent.executeTask({
+        id: uuidv4(),
+        type: 'refactoring',
+                    parameters: { 
+                        code: editor.document.getText(),
+                        refactorType: await vscode.window.showQuickPick(
+                            ['optimize', 'clean', 'simplify', 'general'],
+                            { placeHolder: 'Select refactor type (optional)' }
+                        )
+                    }
+                });
+
+                if (result.success) {
+                    const doc = await vscode.workspace.openTextDocument({
+                        content: result.output,
+                        language: editor.document.languageId
+                    });
+                    await vscode.window.showTextDocument(doc, vscode.ViewColumn.Beside);
+                }
+            } catch (error) {
+                vscode.window.showErrorMessage(
+                    `Refactor failed: ${error instanceof Error ? error.message : String(error)}`
+                );
             }
         })
     );
