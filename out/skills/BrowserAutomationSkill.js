@@ -15,6 +15,16 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.BrowserAutomationSkill = void 0;
 const puppeteer_core_1 = __importDefault(require("puppeteer-core"));
 exports.BrowserAutomationSkill = {
+    validate: (params) => {
+        const errors = [];
+        if (!params.action) {
+            errors.push('Action parameter is required');
+        }
+        else if (!['launch', 'navigate', 'click', 'type', 'screenshot', 'close'].includes(params.action)) {
+            errors.push('Invalid action type');
+        }
+        return { valid: errors.length === 0, errors };
+    },
     metadata: {
         name: 'browser-automation',
         version: '1.0.0',

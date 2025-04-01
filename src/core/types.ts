@@ -40,6 +40,7 @@ export interface AgentTask<T = unknown> {
   type: string;
   parameters: T;
   priority?: number;
+  critical?: boolean; // When true, high severity errors will reject the promise
 }
 
 export interface TaskResult<T = unknown> {

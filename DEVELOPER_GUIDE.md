@@ -1,115 +1,230 @@
-# BLACKBOX AI Assistant - Developer Guide
+# MAFIA Developer Guide
 
-## Setup & Installation
-```bash
-# Clone repository
-git clone <repo-url>
-cd MAFIA
+## Error Handling Patterns
 
-# Install dependencies
-npm install
+### Core Principles
+1. **Timeout Errors** (`TIMEOUT` type, severity 3):
+   - Always reject promises (throw)
+   - Should halt execution flow
+   - Example: API calls, external service timeouts
 
-# Install vsce (Visual Studio Code Extensions) globally
-npm install -g vsce
+2. **Critical Task Errors** (severity >= 2 with `task.critical`):
+   - Reject promises to stop execution
+   - Use for mission-critical operations
+   - Example: Payment processing, data persistence
+
+3. **Non-Critical Errors** (severity 1):
+   - Return error results with metrics
+   - Allow operation continuation
+   - Example: Validation warnings, optional features
+
+### Implementation Example
+```typescript
+try {
+  // Task execution
+} catch (error) {
+  const classification = classifyError(error);
+  
+  if (classification.type === 'TIMEOUT') {
+    throw error; // Reject promise
+  }
+  
+  if (classification.severity >= 2 && task.critical) {
+    throw error; // Reject for critical tasks
+  }
+  
+  return { // Return error result
+    success: false,
+    output: error.message,
+    metrics: { /*...*/ }
+  };
+}
 ```
 
-## Development Commands
-```bash
-# Compile TypeScript (watch mode)
-npm run watch
+### Testing Guidelines
 
-# Run tests
-npm test
-
-# Run specific test file
-npm test -- FileSystemSkill.test.ts
-
-# Check test coverage
-npm run test:coverage
-
-# Lint code
-npm run lint
-
-# Format code
-npm run format
+#### Testing Promise Rejection
+```typescript
+test('should reject on timeout', async () => {
+  const mockFn = jest.fn(() => {
+    throw new Error('API_TIMEOUT');
+  });
+  await expect(component(mockFn)).rejects.toThrow('API_TIMEOUT');
+});
 ```
 
-## Building & Packaging
-```bash
-# Compile for production
-npm run compile
-
-# Package extension (VSIX)
-vsce package
-
-# Package with specific version
-vsce package --major|minor|patch
-
-# Skip warnings during packaging
-vsce package --yarn --no-verify
+#### Testing Error Results  
+```typescript
+test('should return validation error', async () => {
+  const mockFn = jest.fn(() => {
+    throw new Error('Validation failed');
+  });
+  const result = await component(mockFn);
+  expect(result.success).toBe(false);
+  expect(result.metrics.errorType).toBe('VALIDATION');
+});
 ```
 
-## Installation & Testing
-```bash
-# Install extension locally
-code --install-extension blackbox-ai-assistant-1.0.0.vsix
+## Tool-Specific Patterns
 
-# List installed extensions
-code --list-extensions
+### Skill Validation Patterns
 
-# Uninstall extension
-code --uninstall-extension blackbox-ai-assistant
-
-# Reload VSCode window (after changes)
-Ctrl+R (or Cmd+R on Mac)
+**Implementation**:
+```typescript
+validate: (params: any) => {
+  const errors: string[] = [];
+  // Required field check
+  if (!params.requiredField) {
+    errors.push('Field is required');
+  }
+  // Value validation
+  if (!validValues.includes(params.value)) {
+    errors.push('Invalid value');
+  }
+  return { valid: errors.length === 0, errors };
+}
 ```
 
-## Debugging
-```bash
-# Run extension in debug mode
-F5 (in VSCode with debug configuration)
-
-# View extension logs
-View → Output → Select "Extension Host" from dropdown
-
-# Debug specific test
-Add debug configuration for Jest tests
+**Testing**:
+```typescript
+it('should validate input', () => {
+  const validation = skill.validate({});
+  expect(validation.valid).toBe(false);
+  expect(validation.errors).toContain('Field is required');
+});
 ```
 
-## Deployment
-```bash
-# Publish to Marketplace (requires publisher token)
-vsce publish
+**Best Practices**:
+```typescript
+// 1. Null check pattern
+it('should validate input', () => {
+  if (!skill.validate) {
+    throw new Error('validate method missing');
+  }
+  const validation = skill.validate(input);
+  expect(validation.valid).toBe(false);
+});
 
-# Publish patch update
-vsce publish patch
+// 2. Error message testing
+expect(validation.errors).toContain('Field is required');
 
-# Verify Marketplace metadata
-vsce verify-pat
+// 3. Type validation
+expect(validation.errors).toContain('Invalid type');
 ```
 
-## Common Issues & Fixes
-```bash
-# Resolve dependency issues
-rm -rf node_modules package-lock.json
-npm install
+**Best Practices**:
+```typescript
+// 1. Mock puppeteer and page objects
+const mockPage = {
+  goto: jest.fn(),
+  click: jest.fn(),
+  type: jest.fn()
+};
+const mockBrowser = {
+  newPage: jest.fn().mockResolvedValue(mockPage)
+};
+jest.mock('puppeteer-core', () => ({
+  launch: jest.fn().mockResolvedValue(mockBrowser)
+}));
 
-# Fix TypeScript version conflicts
-npm install typescript@latest --save-dev
+// 2. Test structure
+it('should test browser action', async () => {
+  // Arrange - setup mocks
+  mockPage.goto.mockResolvedValue(null);
+  
+  // Act - execute
+  const result = await skill.execute({ 
+    action: 'navigate',
+    url: 'https://example.com' 
+  }, context);
 
-# Clear Jest cache
-npm test --clearCache
+  // Assert - verify
+  expect(result.success).toBe(true);
+  expect(mockPage.goto).toHaveBeenCalledWith('https://example.com');
+});
 
-# Reset VSCode extension host
-Developer: Reload Window (from Command Palette)
+// 3. Error handling
+mockPage.goto.mockRejectedValue(new Error('Navigation failed'));
 ```
 
-## Performance Optimization
-```bash
-# Bundle extension (recommended)
-npm install -g @vscode/vsce
-vsce package --no-yarn --no-dependencies
+**Best Practices**:
+```typescript
+// 1. Mock implementation with callback
+mockedExec.mockImplementation((cmd, options, callback) => {
+  // Successful execution
+  callback(null, { stdout: 'output', stderr: '' });
+  
+  // Error case
+  // const err = new Error('Failed');
+  // (err as any).code = 'ETIMEDOUT';
+  // callback(err);
+});
 
-# Analyze bundle size
-npm install -g webpack-bundle-analyzer
-npm run build -- --analyze
+// 2. Test structure
+it('should test command', async () => {
+  // Arrange - setup mocks
+  // Act - execute
+  // Assert - verify
+}, 30000); // Timeout
+
+// 3. Error handling
+interface CommandError extends Error {
+  code?: string;
+}
+```
+
+**Best Practices**:
+```typescript
+// 1. Use proper timeouts (30s+ for command tests)
+jest.setTimeout(30000);
+
+// 2. Simple mock implementations  
+mockedExec.mockResolvedValue({ stdout: 'output' });
+
+// 3. Error handling
+const error = new Error('Failed');
+(error as any).code = 'ETIMEDOUT'; 
+mockedExec.mockRejectedValue(error);
+
+// Failing command  
+mockedExec.mockImplementation(() =>
+  Promise.reject(new Error('Command failed'))
+);
+
+// Timeout handling
+interface CommandError extends Error {
+  code?: string; // 'ETIMEDOUT', etc
+}
+const error: CommandError = new Error('Timeout');
+error.code = 'ETIMEDOUT';
+
+try {
+  const { stdout } = await execAsync(command);
+} catch (error) {
+  if ((error as CommandError).code === 'ETIMEDOUT') {
+    // Handle timeout
+  }
+}
+```
+
+## Filesystem-Specific Patterns
+
+### Error Handling
+```typescript
+interface FSError extends Error {
+  code?: string; // 'ENOENT', 'EACCES', etc
+}
+
+// Handle filesystem errors
+if (error.code === 'ENOENT') {
+  // File not found handling
+} else if (error.code === 'EACCES') {
+  // Permission denied handling
+}
+
+## Best Practices
+- Use consistent error types and severity levels
+- Always include filesystem error codes
+- Include detailed metrics in error results
+- Document error handling behavior in interfaces
+- Test both rejection and error result scenarios
