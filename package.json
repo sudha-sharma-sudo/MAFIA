@@ -1,0 +1,55 @@
+{
+  "name": "blackbox-ai-assistant",
+  "displayName": "BLACKBOX AI Assistant",
+  "description": "AI coding assistant with natural language processing",
+  "version": "1.0.0",
+  "engines": {
+    "vscode": "^1.75.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "activationEvents": [
+    "onCommand:blackboxai.showAssistant"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "blackboxai.showAssistant",
+        "title": "Show AI Assistant",
+        "category": "BLACKBOX AI"
+      },
+      {
+        "command": "blackboxai.analyzeCode",
+        "title": "Analyze Code",
+        "category": "BLACKBOX AI"
+      },
+      {
+        "command": "blackboxai.generateDocs",
+        "title": "Generate Documentation",
+        "category": "BLACKBOX AI"
+      }
+    ]
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "pretest": "npm run compile",
+    "test": "mocha --require ./test/setup.js --require ts-node/register src/__tests__/runTest.ts",
+    "lint": "eslint src --ext ts"
+  },
+  "dependencies": {
+    "axios": "^1.6.7"
+  },
+  "devDependencies": {
+    "@types/mocha": "^10.0.10",
+    "@types/node": "^16.18.126",
+    "@types/vscode": "^1.98.0",
+    "eslint": "^8.0.1",
+    "mocha": "^10.8.2",
+    "ts-node": "^10.9.2",
+    "typescript": "^4.4.4"
+  }
+}
