@@ -3,7 +3,7 @@ import { jest } from '@jest/globals';
 const vscode = {
   window: {
     showErrorMessage: jest.fn(),
-    showInformationMessage: jest.fn(), 
+    showInformationMessage: jest.fn(),
     showWarningMessage: jest.fn()
   },
   commands: {

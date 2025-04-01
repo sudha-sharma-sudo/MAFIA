@@ -1,15 +1,13 @@
 import { EventEmitter } from 'events';
 
-export interface EnhancedSkillDefinition {
-  metadata: {
-    name: string;
-    version: string;
-    description: string;
-    author?: string;
-    documentation?: string;
-    dependencies?: string[];
-  };
-  parameters: {
+export interface SkillMetadata {
+  name: string;
+  version: string;
+  description: string;
+  author?: string;
+  documentation?: string;
+  dependencies?: string[];
+  parameters?: {
     [key: string]: {
       type: 'string' | 'number' | 'boolean' | 'object' | 'array';
       required: boolean;
@@ -18,6 +16,10 @@ export interface EnhancedSkillDefinition {
       validation?: (value: any) => boolean;
     };
   };
+}
+
+export interface EnhancedSkillDefinition {
+  metadata: SkillMetadata;
   execute: (params: any, context?: SkillContext) => Promise<SkillExecutionResult>;
   timeout?: number;
   validate?: (params: any) => ValidationResult;

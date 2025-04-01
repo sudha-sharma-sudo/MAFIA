@@ -17,7 +17,7 @@ export class MAFIAAgent {
     this.taskQueue = [];
   }
 
-  async executeTask(task: AgentTask): Promise<TaskResult> {
+  async executeTask<T = unknown, R = unknown>(task: AgentTask<T>): Promise<TaskResult<R>> {
     const taskId = uuidv4();
     const startTime = Date.now();
     this.activeTasks.set(taskId, task);
@@ -30,7 +30,7 @@ export class MAFIAAgent {
       if (similarFailures.length > 0) {
         return {
           success: false,
-          output: `Similar tasks previously failed: ${similarFailures.map(f => f.rationale).join(', ')}`,
+          output: `Similar tasks previously failed: ${similarFailures.map(f => f.rationale).join(', ')}` as unknown as R,
           metrics: {
             duration: Date.now() - startTime,
             errorCount: 1
@@ -80,7 +80,7 @@ export class MAFIAAgent {
     }
   }
 
-  private async processTask(task: AgentTask): Promise<TaskResult> {
+  private async processTask<T, R>(task: AgentTask<T>): Promise<TaskResult<R>> {
     const startTime = Date.now();
     try {
       const context: SkillContext = {
@@ -93,14 +93,17 @@ export class MAFIAAgent {
         }
       };
       
-      const result = await this.skillSet.executeSkill(
+      const result = await this.skillSet.executeSkill<T, R>(
         task.type, 
-        task.parameters,
+        task.parameters as T,
         context
       );
       
-      if (task.parameters.filePath && this.knowledgeBase.linkDecisionToCode) {
-        this.knowledgeBase.linkDecisionToCode(task.id, task.parameters.filePath);
+      if (this.knowledgeBase.linkDecisionToCode) {
+        const params = task.parameters as Record<string, unknown>;
+        if (typeof params.filePath === 'string') {
+          this.knowledgeBase.linkDecisionToCode(task.id, params.filePath);
+        }
       }
 
       return {
@@ -114,7 +117,7 @@ export class MAFIAAgent {
     } catch (error) {
       return {
         success: false,
-        output: error instanceof Error ? error.message : String(error),
+        output: (error instanceof Error ? error.message : String(error)) as unknown as R,
         metrics: {
           duration: Date.now() - startTime,
           errorCount: 1

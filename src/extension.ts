@@ -134,7 +134,7 @@ export function activate(context: vscode.ExtensionContext) {
 
                 if (result.success) {
                     const doc = await vscode.workspace.openTextDocument({
-                        content: result.output,
+                        content: String(result.output),
                         language: editor.document.languageId
                     });
                     await vscode.window.showTextDocument(doc, vscode.ViewColumn.Beside);

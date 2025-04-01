@@ -1,54 +1,54 @@
-export interface SkillDefinition {
+export interface SkillDefinition<T = unknown, R = unknown> {
   name: string;
   description: string;
   parameters: Record<string, ParameterDefinition>;
-  execute: (params: any, context?: SkillContext) => Promise<SkillExecutionResult>;
+  execute: (params: T, context?: SkillContext) => Promise<SkillExecutionResult<R>>;
 }
 
 export interface ParameterDefinition {
   type: string;
   required: boolean;
   description: string;
-  default?: any;
+  default?: unknown;
   enum?: string[];
 }
 
-export interface SkillExecutionResult {
-  output: any;
+export interface SkillExecutionResult<T = unknown> {
+  output: T;
   success: boolean;
   metrics: {
     duration: number;
     memoryUsage?: number;
     cpuUsage?: number;
-    [key: string]: any;
+    [key: string]: unknown;
   };
-  artifacts?: any[];
+  artifacts?: unknown[];
 }
 
 export interface SkillContext {
   requestId: string;
   agentId: string;
-  knowledgeGraph: any;
+  knowledgeGraph: unknown;
   logger: {
     info: (msg: string) => void;
     error: (msg: string) => void;
   };
 }
 
-export interface AgentTask {
+export interface AgentTask<T = unknown> {
   id: string;
   type: string;
-  parameters: any;
+  parameters: T;
   priority?: number;
 }
 
-export interface TaskResult {
+export interface TaskResult<T = unknown> {
   success: boolean;
-  output: any;
+  output: T;
   metrics: {
     duration: number;
     errorCount?: number;
-    [key: string]: any;
+    [key: string]: unknown;
   };
 }
 
