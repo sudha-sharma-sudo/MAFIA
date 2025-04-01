@@ -37,6 +37,7 @@ const vscode = __importStar(require("vscode"));
 const uuid_1 = require("uuid");
 const AIService_1 = require("./ai/AIService");
 const AgentSystem_1 = require("./core/AgentSystem");
+const FileSystemUI_1 = require("./webview/FileSystemUI");
 function activate(context) {
     const config = vscode.workspace.getConfiguration('blackboxai');
     const apiKey = config.get('apiKey', '');
@@ -81,8 +82,13 @@ function activate(context) {
                 }
             };
         });
+    // Register FileSystemSkill
+    const FileSystemSkill = require('./skills/FileSystemSkill').default;
+    agent.skillSet.registerSkill(FileSystemSkill);
     // Register commands
-    context.subscriptions.push(vscode.commands.registerCommand('blackboxai.showAssistant', () => __awaiter(this, void 0, void 0, function* () {
+    context.subscriptions.push(vscode.commands.registerCommand('blackboxai.showFileSystem', () => {
+        FileSystemUI_1.FileSystemUI.show(context);
+    }), vscode.commands.registerCommand('blackboxai.showAssistant', () => __awaiter(this, void 0, void 0, function* () {
         const panel = vscode.window.createWebviewPanel('blackboxAI', 'BLACKBOX AI Assistant', vscode.ViewColumn.One, { enableScripts: true });
         panel.webview.html = getWebviewContent();
         panel.webview.onDidReceiveMessage((message) => __awaiter(this, void 0, void 0, function* () {

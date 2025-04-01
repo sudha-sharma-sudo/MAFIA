@@ -19,18 +19,19 @@ const CodeRefactorSkill: SkillDefinition = {
       description: 'Type of refactoring (e.g., "optimize", "clean", "simplify")'
     }
   },
-  execute: async (params: { code: string, refactorType?: string }) => {
+  execute: async (params: unknown) => {
+    const { code, refactorType } = params as { code: string, refactorType?: string };
     const startTime = Date.now();
-    if (!params.code) {
+    if (!code) {
       throw new Error('Code parameter is required');
     }
-    const response = await aiService.refactorCode(params.code, params.refactorType);
+    const response = await aiService.refactorCode(code, refactorType);
     return { 
       success: true,
       output: response,
       metrics: {
         duration: Date.now() - startTime,
-        originalLength: params.code.length,
+      originalLength: code.length,
         refactoredLength: response.length
       }
     };

@@ -28,17 +28,18 @@ const CodeRefactorSkill = {
         }
     },
     execute: (params) => __awaiter(void 0, void 0, void 0, function* () {
+        const { code, refactorType } = params;
         const startTime = Date.now();
-        if (!params.code) {
+        if (!code) {
             throw new Error('Code parameter is required');
         }
-        const response = yield aiService.refactorCode(params.code, params.refactorType);
+        const response = yield aiService.refactorCode(code, refactorType);
         return {
             success: true,
             output: response,
             metrics: {
                 duration: Date.now() - startTime,
-                originalLength: params.code.length,
+                originalLength: code.length,
                 refactoredLength: response.length
             }
         };

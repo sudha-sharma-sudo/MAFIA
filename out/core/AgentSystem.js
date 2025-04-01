@@ -52,7 +52,11 @@ class MAFIAAgent {
                             outcome: 'success',
                             version: 1
                         });
-                        return Object.assign(Object.assign({}, result), { metrics: Object.assign(Object.assign({}, result.metrics), { duration: Date.now() - startTime }) });
+                        return {
+                            success: result.success,
+                            output: result.output,
+                            metrics: Object.assign(Object.assign({}, (result.metrics || {})), { duration: Date.now() - startTime })
+                        };
                     }
                     catch (error) {
                         lastError = error;

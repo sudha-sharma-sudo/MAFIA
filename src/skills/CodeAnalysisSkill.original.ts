@@ -10,17 +10,18 @@ const CodeAnalysisSkill: SkillDefinition = {
       description: 'The code to analyze'
     }
   },
-  execute: async (params: { code: string }) => {
+  execute: async (params: unknown) => {
+    const { code } = params as { code: string };
     const startTime = Date.now();
     const issues = [];
     
-    if (params.code.includes('TODO')) {
+    if (code.includes('TODO')) {
       issues.push('Contains TODO comments');
     }
-    if (params.code.length > 100) {
+    if (code.length > 100) {
       issues.push('Code is too long (over 100 chars)');
     }
-    if (!params.code.includes('return')) {
+    if (!code.includes('return')) {
       issues.push('Function may be missing return statement');
     }
 
@@ -29,7 +30,7 @@ const CodeAnalysisSkill: SkillDefinition = {
       success: true,
       metrics: {
         duration: Date.now() - startTime,
-        length: params.code.length,
+      length: code.length,
         complexity: issues.length
       }
     };

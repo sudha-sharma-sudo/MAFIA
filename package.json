@@ -4,17 +4,23 @@
   "description": "AI coding assistant with natural language processing",
   "version": "1.0.0",
   "engines": {
-    "vscode": "^1.75.0"
+    "vscode": "^1.98.0"
   },
   "categories": [
     "Other"
   ],
   "activationEvents": [
-    "onCommand:blackboxai.showAssistant"
+    "onCommand:blackboxai.showAssistant",
+    "onCommand:blackboxai.showFileSystem"
   ],
   "main": "./out/extension.js",
   "contributes": {
     "commands": [
+      {
+        "command": "blackboxai.showFileSystem",
+        "title": "Show File System Operations",
+        "category": "BLACKBOX AI"
+      },
       {
         "command": "blackboxai.showAssistant",
         "title": "Show AI Assistant",

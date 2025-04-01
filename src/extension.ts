@@ -2,6 +2,7 @@ import * as vscode from 'vscode';
 import { v4 as uuidv4 } from 'uuid';
 import { AIService } from './ai/AIService';
 import { MAFIAAgent } from './core/AgentSystem';
+import { FileSystemUI } from './webview/FileSystemUI';
 
 export function activate(context: vscode.ExtensionContext) {
     const config = vscode.workspace.getConfiguration('blackboxai');
@@ -53,8 +54,16 @@ export function activate(context: vscode.ExtensionContext) {
             };
         };
 
+    // Register FileSystemSkill
+    const FileSystemSkill = require('./skills/FileSystemSkill').default;
+    agent.skillSet.registerSkill(FileSystemSkill);
+
     // Register commands
     context.subscriptions.push(
+        vscode.commands.registerCommand('blackboxai.showFileSystem', () => {
+            FileSystemUI.show(context);
+        }),
+
         vscode.commands.registerCommand('blackboxai.showAssistant', async () => {
             const panel = vscode.window.createWebviewPanel(
                 'blackboxAI',

@@ -20,15 +20,16 @@ const CodeAnalysisSkill = {
         }
     },
     execute: (params) => __awaiter(void 0, void 0, void 0, function* () {
+        const { code } = params;
         const startTime = Date.now();
         const issues = [];
-        if (params.code.includes('TODO')) {
+        if (code.includes('TODO')) {
             issues.push('Contains TODO comments');
         }
-        if (params.code.length > 100) {
+        if (code.length > 100) {
             issues.push('Code is too long (over 100 chars)');
         }
-        if (!params.code.includes('return')) {
+        if (!code.includes('return')) {
             issues.push('Function may be missing return statement');
         }
         return {
@@ -36,7 +37,7 @@ const CodeAnalysisSkill = {
             success: true,
             metrics: {
                 duration: Date.now() - startTime,
-                length: params.code.length,
+                length: code.length,
                 complexity: issues.length
             }
         };
