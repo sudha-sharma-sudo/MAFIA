@@ -60,6 +60,9 @@ class AIService {
     analyzeCode(code) {
         return __awaiter(this, void 0, void 0, function* () {
             const result = yield this.executeSkill('code-analysis', { code });
+            if (typeof result.output !== 'string') {
+                throw new Error('Analysis returned non-string output');
+            }
             return result.output;
         });
     }
@@ -69,6 +72,9 @@ class AIService {
                 code,
                 refactorType: refactorType || 'optimize'
             });
+            if (typeof result.output !== 'string') {
+                throw new Error('Refactor returned non-string output');
+            }
             return result.output;
         });
     }
@@ -79,7 +85,11 @@ class AIService {
     }
     generateDocumentation(code) {
         return __awaiter(this, void 0, void 0, function* () {
-            return this.analyzeCode(code);
+            const result = yield this.executeSkill('documentation', { code });
+            if (typeof result.output !== 'string') {
+                throw new Error('Documentation generation returned non-string output');
+            }
+            return result.output;
         });
     }
     clearCache() {

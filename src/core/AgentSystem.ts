@@ -52,9 +52,10 @@ export class MAFIAAgent {
             version: 1
           });
           return {
-            ...result,
+            success: result.success,
+            output: result.output as R,
             metrics: {
-              ...result.metrics,
+              ...(result.metrics || {}),
               duration: Date.now() - startTime
             }
           };
@@ -93,9 +94,9 @@ export class MAFIAAgent {
         }
       };
       
-      const result = await this.skillSet.executeSkill<T, R>(
-        task.type, 
-        task.parameters as T,
+      const result = await this.skillSet.executeSkill(
+        task.type,
+        task.parameters,
         context
       );
       
@@ -108,7 +109,7 @@ export class MAFIAAgent {
 
       return {
         success: true,
-        output: result.output,
+        output: result.output as R,
         metrics: {
           duration: Date.now() - startTime,
           ...(result.metrics || {})

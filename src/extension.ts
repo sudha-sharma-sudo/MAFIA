@@ -17,9 +17,11 @@ export function activate(context: vscode.ExtensionContext) {
     // Import and register skills
     const CodeAnalysisSkill = require('./skills/CodeAnalysisSkill').default;
     const CodeRefactorSkill = require('./skills/CodeRefactorSkill').default;
+    const DocumentationSkill = require('./skills/DocumentationSkill').default;
     
     agent.skillSet.registerSkill(CodeAnalysisSkill);
     agent.skillSet.registerSkill(CodeRefactorSkill);
+    agent.skillSet.registerSkill(DocumentationSkill);
 
     // Initialize agent with AI service
     agent.skillSet.getSkill('code-analysis')!.execute = 

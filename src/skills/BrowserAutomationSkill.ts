@@ -1,5 +1,11 @@
 import { EnhancedSkillDefinition, SkillExecutionResult, SkillContext } from '../core/EnhancedSkillTypes';
+import type { Browser, Page } from 'puppeteer-core';
 import puppeteer from 'puppeteer-core';
+
+interface BrowserArtifacts {
+  browser?: Browser;
+  page?: Page;
+}
 
 interface BrowserParams {
   action: 'launch' | 'navigate' | 'click' | 'type' | 'screenshot' | 'close';
@@ -55,8 +61,9 @@ export const BrowserAutomationSkill: EnhancedSkillDefinition = {
   async execute(params: BrowserParams, context?: SkillContext): Promise<SkillExecutionResult> {
     try {
       const startTime = Date.now();
-      let browser = context?.artifacts?.browser;
-      let page = context?.artifacts?.page;
+      const artifacts = (context as SkillContext & { artifacts?: BrowserArtifacts })?.artifacts;
+      let browser = artifacts?.browser;
+      let page = artifacts?.page;
       let output: any;
 
       switch (params.action) {
@@ -77,13 +84,13 @@ export const BrowserAutomationSkill: EnhancedSkillDefinition = {
 
         case 'click':
           if (!page) throw new Error('No active browser page');
-          await page.click(params.selector!, { timeout: params.timeout });
+          await page.click(params.selector!, { timeout: params.timeout } as any);
           output = { selector: params.selector, action: 'clicked' };
           break;
 
         case 'type':
           if (!page) throw new Error('No active browser page');
-          await page.type(params.selector!, params.text!, { timeout: params.timeout });
+          await page.type(params.selector!, params.text!, { timeout: params.timeout } as any);
           output = { selector: params.selector, action: 'text_entered', text: params.text };
           break;
 
@@ -106,7 +113,7 @@ export const BrowserAutomationSkill: EnhancedSkillDefinition = {
         artifacts: { browser, page },
         metrics: {
           duration: Date.now() - startTime,
-          action: params.action
+          // action: params.action - removed as it's not part of metrics interface
         }
       };
     } catch (error) {
