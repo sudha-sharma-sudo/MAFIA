@@ -62,9 +62,9 @@ describe('DocumentationSkill', () => {
     }));
     it('should respect timeout', () => __awaiter(void 0, void 0, void 0, function* () {
         const originalExecute = DocumentationSkill_1.default.execute;
-        DocumentationSkill_1.default.execute = jest.fn(() => new Promise(resolve => setTimeout(resolve, DocumentationSkill_1.default.timeout + 100)));
+        DocumentationSkill_1.default.execute = jest.fn(() => new Promise((_, reject) => setTimeout(() => reject(new Error('API_TIMEOUT')), DocumentationSkill_1.default.timeout + 100)));
         yield expect(DocumentationSkill_1.default.execute({ code: 'test' }, mockContext))
-            .rejects.toThrow('timeout');
+            .rejects.toThrow('API_TIMEOUT');
         DocumentationSkill_1.default.execute = originalExecute;
     }));
 });

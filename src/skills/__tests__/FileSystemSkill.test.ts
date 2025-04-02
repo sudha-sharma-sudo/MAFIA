@@ -4,17 +4,43 @@ import * as fs from 'fs';
 import { promises as fsPromises } from 'fs';
 import path from 'path';
 
-// Mock fs module
-jest.mock('fs', () => ({
-  promises: {
-    readFile: jest.fn(),
-    writeFile: jest.fn(),
-    unlink: jest.fn(),
-    readdir: jest.fn().mockImplementation(() => Promise.resolve([])),
-    stat: jest.fn()
-  },
-  Dirent: class {}
-}));
+// Mock fs module with proper implementations
+jest.mock('fs', () => {
+  const actualFs = jest.requireActual('fs');
+  const mockFs = {
+    promises: {
+      readFile: jest.fn().mockImplementation((path, encoding) => {
+        // Return test content for any file in test environment
+        return Promise.resolve('test content');
+      }),
+      writeFile: jest.fn().mockImplementation((path, content, encoding) => {
+        // Verify encoding is always provided
+        if (!encoding) {
+          throw new Error('Encoding not provided');
+        }
+        return Promise.resolve();
+      }),
+      unlink: jest.fn().mockResolvedValue(undefined),
+      readdir: jest.fn().mockImplementation(() => 
+        Promise.resolve([
+          { name: 'file1.txt', isFile: () => true, isDirectory: () => false },
+          { name: 'file2.txt', isFile: () => true, isDirectory: () => false }
+        ])
+      ),
+      stat: jest.fn().mockResolvedValue({ size: 1024 })
+    },
+    Dirent: class {}
+  };
+  
+  // Add spy functionality to track calls
+  mockFs.promises.readFile.mockName('readFile');
+  mockFs.promises.writeFile.mockName('writeFile');
+  
+  return {
+    ...actualFs,
+    ...mockFs
+  };
+});
 
 const mockedFsPromises = fsPromises as jest.Mocked<typeof fsPromises>;
 
@@ -39,7 +65,7 @@ describe('FileSystemSkill', () => {
 
   describe('file operations', () => {
     it('should read file successfully', async () => {
-      mockedFs.readFile.mockResolvedValue('file content');
+      mockedFsPromises.readFile.mockResolvedValue('file content');
       const result = await FileSystemSkill.execute({
         operation: 'read',
         path: 'test.txt'
@@ -79,7 +105,7 @@ describe('FileSystemSkill', () => {
 
   describe('file operations', () => {
     it('should read file successfully', async () => {
-      mockedFs.readFile.mockResolvedValue('file content');
+      mockedFsPromises.readFile.mockResolvedValue('file content');
       const result = await FileSystemSkill.execute({
         operation: 'read',
         path: 'test.txt'

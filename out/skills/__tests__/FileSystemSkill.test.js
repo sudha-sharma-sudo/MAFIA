@@ -15,18 +15,37 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const FileSystemSkill_1 = require("../FileSystemSkill");
 const fs_1 = require("fs");
 const path_1 = __importDefault(require("path"));
-// Mock fs module
-jest.mock('fs', () => ({
-    promises: {
-        readFile: jest.fn(),
-        writeFile: jest.fn(),
-        unlink: jest.fn(),
-        readdir: jest.fn().mockImplementation(() => Promise.resolve([])),
-        stat: jest.fn()
-    },
-    Dirent: class {
-    }
-}));
+// Mock fs module with proper implementations
+jest.mock('fs', () => {
+    const actualFs = jest.requireActual('fs');
+    const mockFs = {
+        promises: {
+            readFile: jest.fn().mockImplementation((path, encoding) => {
+                // Return test content for any file in test environment
+                return Promise.resolve('test content');
+            }),
+            writeFile: jest.fn().mockImplementation((path, content, encoding) => {
+                // Verify encoding is always provided
+                if (!encoding) {
+                    throw new Error('Encoding not provided');
+                }
+                return Promise.resolve();
+            }),
+            unlink: jest.fn().mockResolvedValue(undefined),
+            readdir: jest.fn().mockImplementation(() => Promise.resolve([
+                { name: 'file1.txt', isFile: () => true, isDirectory: () => false },
+                { name: 'file2.txt', isFile: () => true, isDirectory: () => false }
+            ])),
+            stat: jest.fn().mockResolvedValue({ size: 1024 })
+        },
+        Dirent: class {
+        }
+    };
+    // Add spy functionality to track calls
+    mockFs.promises.readFile.mockName('readFile');
+    mockFs.promises.writeFile.mockName('writeFile');
+    return Object.assign(Object.assign({}, actualFs), mockFs);
+});
 const mockedFsPromises = fs_1.promises;
 describe('FileSystemSkill', () => {
     const mockContext = {
@@ -45,17 +64,23 @@ describe('FileSystemSkill', () => {
     beforeEach(() => {
         jest.clearAllMocks();
     });
-    describe('validation', () => {
-        it('should have validate method', () => {
-            expect(FileSystemSkill_1.FileSystemSkill.validate).toBeDefined();
-        });
-        it('should require path parameter', () => {
+    describe('file operations', () => {
+        it('should read file successfully', () => __awaiter(void 0, void 0, void 0, function* () {
+            mockedFsPromises.readFile.mockResolvedValue('file content');
+            const result = yield FileSystemSkill_1.FileSystemSkill.execute({
+                operation: 'read',
+                path: 'test.txt'
+            }, mockContext);
+            expect(result.success).toBe(true);
+            expect(result.output).toBe('file content');
+        }));
+        it('should write file successfully', () => __awaiter(void 0, void 0, void 0, function* () {
             if (!FileSystemSkill_1.FileSystemSkill.validate)
                 return;
             const validation = FileSystemSkill_1.FileSystemSkill.validate({ operation: 'read' });
             expect(validation.valid).toBe(false);
             expect(validation.errors).toContain('Path parameter is required');
-        });
+        }));
         it('should require content for write operations', () => {
             if (!FileSystemSkill_1.FileSystemSkill.validate)
                 return;
@@ -89,7 +114,6 @@ describe('FileSystemSkill', () => {
             expect(mockedFsPromises.readFile).toHaveBeenCalledWith(path_1.default.resolve('test.txt'), 'utf-8');
         }));
         it('should write file successfully', () => __awaiter(void 0, void 0, void 0, function* () {
-            mockedFsPromises.writeFile.mockResolvedValue(undefined);
             const result = yield FileSystemSkill_1.FileSystemSkill.execute({
                 operation: 'write',
                 path: 'test.txt',
@@ -99,7 +123,6 @@ describe('FileSystemSkill', () => {
             expect(mockedFsPromises.writeFile).toHaveBeenCalledWith(path_1.default.resolve('test.txt'), 'new content', 'utf-8');
         }));
         it('should delete file successfully', () => __awaiter(void 0, void 0, void 0, function* () {
-            mockedFsPromises.unlink.mockResolvedValue(undefined);
             const result = yield FileSystemSkill_1.FileSystemSkill.execute({
                 operation: 'delete',
                 path: 'test.txt'
@@ -108,6 +131,7 @@ describe('FileSystemSkill', () => {
             expect(mockedFsPromises.unlink).toHaveBeenCalledWith(path_1.default.resolve('test.txt'));
         }));
         it('should list directory contents', () => __awaiter(void 0, void 0, void 0, function* () {
+            // Create proper Dirent mock objects
             const mockDirent1 = {
                 name: 'file1.txt',
                 isFile: () => true,

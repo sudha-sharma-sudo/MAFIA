@@ -47,7 +47,7 @@ describe('FileSystemSkill', () => {
     });
     describe('file operations', () => {
         it('should read file successfully', () => __awaiter(void 0, void 0, void 0, function* () {
-            mockedFs.readFile.mockResolvedValue('file content');
+            mockedFsPromises.readFile.mockResolvedValue('file content');
             const result = yield FileSystemSkill_1.FileSystemSkill.execute({
                 operation: 'read',
                 path: 'test.txt'
@@ -85,7 +85,7 @@ describe('FileSystemSkill', () => {
     });
     describe('file operations', () => {
         it('should read file successfully', () => __awaiter(void 0, void 0, void 0, function* () {
-            mockedFs.readFile.mockResolvedValue('file content');
+            mockedFsPromises.readFile.mockResolvedValue('file content');
             const result = yield FileSystemSkill_1.FileSystemSkill.execute({
                 operation: 'read',
                 path: 'test.txt'

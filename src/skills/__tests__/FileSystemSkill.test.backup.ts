@@ -39,7 +39,7 @@ describe('FileSystemSkill', () => {
 
   describe('file operations', () => {
     it('should read file successfully', async () => {
-      mockedFs.readFile.mockResolvedValue('file content');
+      mockedFsPromises.readFile.mockResolvedValue('file content');
       const result = await FileSystemSkill.execute({
         operation: 'read',
         path: 'test.txt'
@@ -79,7 +79,7 @@ describe('FileSystemSkill', () => {
 
   describe('file operations', () => {
     it('should read file successfully', async () => {
-      mockedFs.readFile.mockResolvedValue('file content');
+      mockedFsPromises.readFile.mockResolvedValue('file content');
       const result = await FileSystemSkill.execute({
         operation: 'read',
         path: 'test.txt'

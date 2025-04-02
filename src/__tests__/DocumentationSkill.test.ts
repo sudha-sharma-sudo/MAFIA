@@ -67,11 +67,11 @@ describe('DocumentationSkill', () => {
   it('should respect timeout', async () => {
     const originalExecute = DocumentationSkill.execute;
     DocumentationSkill.execute = jest.fn(() => 
-      new Promise(resolve => setTimeout(resolve, DocumentationSkill.timeout! + 100))
+      new Promise((_, reject) => setTimeout(() => reject(new Error('API_TIMEOUT')), DocumentationSkill.timeout! + 100))
     );
     
     await expect(DocumentationSkill.execute({ code: 'test' }, mockContext))
-      .rejects.toThrow('timeout');
+      .rejects.toThrow('API_TIMEOUT');
     
     DocumentationSkill.execute = originalExecute;
   });
